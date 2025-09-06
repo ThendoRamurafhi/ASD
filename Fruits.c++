@@ -1,56 +1,73 @@
-#include <ostream>
+#include <iostream>
 #include <string>
+#include <variant>
+#include <vector>
 
-class Pear{
+// Pear class
+class Pear {
     int weight;
 public:
-    Pear(const int weight): weight(weight){}
+    Pear(int weight) : weight(weight) {}
     int juice() const { return weight / 2; }
-    void takeJuice(const int amount) { weight -= (amount * 2); }
+    void takeJuice(int amount) { weight -= (amount * 2); }
 };
 
-class Grapes{
+// Grapes class
+class Grapes {
     int count;
 public:
-    Grapes(const int count) : count(count){}
-    int wine() const {return count * 2;}
-    void takeWine(const int amount) {count -= (amount / 2); }
+    Grapes(int count) : count(count) {}
+    int wine() const { return count * 2; }
+    void takeWine(int amount) { count -= (amount / 2); }
+
+    int getCount() const { return count; } // added getter
 };
 
+// Variant type
 using Fruit = std::variant<Pear, Grapes>;
 
-class Print{
+// Print visitor
+class Print {
 public:
-    void operator() (const Pear& p) const {//worker method
-        std::println("Hmm juicy pear {}", p.juice());
+    void operator()(const Pear& p) const {
+        std::cout << "Hmm juicy pear " << p.juice() << "\n";
     }
-    void operator() (const Grapes& g) const {
-        std::println("{} grapes hold {} wine", g.count(), g.wine()); 
+    void operator()(const Grapes& g) const {
+        std::cout << g.getCount() << " grapes hold " << g.wine() << " wine\n";
     }
 };
 
+// Squeeze visitor
 class Squeeze {
-    const int amount;
+    int amount;
 public:
-    Squeeze(const int amount): amount(amount){}
-    void operator() (Pear& p) const { p.takeJuice(amount); }
-    void operator() (Grapes& g) const { g.takeWine(amount); }
+    Squeeze(int amount) : amount(amount) {}
+    void operator()(Pear& p) const { p.takeJuice(amount); }
+    void operator()(Grapes& g) const { g.takeWine(amount); }
 };
 
+// Apply visitors
 void PrintAll(const std::vector<Fruit>& fruits) {
-    for(auto& f: fruits) {std::applyPattern(Print(), f);}
+    for (auto& f : fruits) {
+        std::visit(Print(), f);
+    }
 }
 
-void SqueezeAll(const std::vector<Fruit>& fruits, const int amount) {
-    for(auto& f: fruits) {std::applyPattern(Squeeze(amount), f);}
+void SqueezeAll(std::vector<Fruit>& fruits, int amount) {
+    for (auto& f : fruits) {
+        std::visit(Squeeze(amount), f);
+    }
 }
 
-int main(){
+int main() {
     std::vector<Fruit> fruits;
     fruits.push_back(Pear{10});
     fruits.push_back(Grapes{20});
     fruits.push_back(Grapes{30});
+
     PrintAll(fruits);
     SqueezeAll(fruits, 1);
     PrintAll(fruits);
+
+    return 0;
 }
